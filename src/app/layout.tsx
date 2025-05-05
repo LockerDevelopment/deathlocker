@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
-
+import { SolanaProvider } from "@/components/SolanaProvider";
 import "./globals.css";
+import Header from "@/components/ui/Header";
+export const metadata: Metadata = {
+  title: "DeathLocker",
+  description: "A secure vault for storing critical digital information—private keys, passwords, messages—accessible only after the user’s death. ",
+};
 
 export default function RootLayout({
   children,
@@ -9,9 +14,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body       
-      >
+      <body>
+      <SolanaProvider>
+      <Header/>
         {children}
+      </SolanaProvider>
       </body>
     </html>
   );
