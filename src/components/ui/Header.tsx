@@ -12,7 +12,7 @@ export default function Header() {
             <Lock className="mr-2 w-4 h-4" /> Створити сейф
           </Button>
         </Link>
-        <Link href="/unlock-safe">
+        <Link href="/my-safes">
           <Button variant="outline" className="border-zinc-700 text-white text-sm">
             <ShieldCheck className="mr-2 w-4 h-4" /> Відкрити сейф
           </Button>

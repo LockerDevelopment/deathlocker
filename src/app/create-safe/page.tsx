@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Lock, Key, Users, Clock } from "lucide-react";
+import Cookies from "js-cookie";
 
 type UnlockType = "time" | "vote";
 
@@ -25,14 +26,31 @@ export default function CreateSafePage() {
       console.log(
         `Розблокування за часом: ${inactiveDays} днів, ${inactiveHours} годин, ${inactiveMinutes} хвилин`
       );
-      
     } else if (unlockType === "vote") {
       console.log("Гаманці для голосування:", voters);
-      
     }
     try {
       setTimeout(() => {
-        setCID("bafy...mockedcid");
+        const mockCID = "bafy...mockedcid";
+        setCID(mockCID);
+
+        const newSafe = {
+          cid: mockCID,
+          encryptionKey,
+          unlockType,
+          timestamp: Date.now(),
+          fileName: file.name,
+          inactiveDays,
+          inactiveHours,
+          inactiveMinutes,
+          voters: voters.trim().split("\n"),
+        };
+
+        const existingSafes = Cookies.get("deathlocker-safes");
+        const safes = existingSafes ? JSON.parse(existingSafes) : [];
+        safes.push(newSafe);
+        Cookies.set("deathlocker-safes", JSON.stringify(safes), { expires: 365 });
+
         setLoading(false);
       }, 1500);
     } catch (err) {
