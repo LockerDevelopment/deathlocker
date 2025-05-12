@@ -17,6 +17,10 @@ export default function Header() {
             <ShieldCheck className="mr-2 w-4 h-4" /> Відкрити сейф
           </Button>
         </Link>
+          <Link href="/available-safes">          
+            <ShieldCheck className="mr-2 w-4 h-4" /> Очікуванні сейф
+          </Link>
+        
       </div>
       <WalletConnection />
     </div>

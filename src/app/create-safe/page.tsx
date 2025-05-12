@@ -19,45 +19,39 @@ export default function CreateSafePage() {
   const [voters, setVoters] = useState<string>("");
 
   const handleSubmit = async () => {
-    if (!file || !encryptionKey) return alert("Файл і ключ обов'язкові");
-    setLoading(true);
-    console.log("Тип розблокування:", unlockType);
-    if (unlockType === "time") {
-      console.log(
-        `Розблокування за часом: ${inactiveDays} днів, ${inactiveHours} годин, ${inactiveMinutes} хвилин`
-      );
-    } else if (unlockType === "vote") {
-      console.log("Гаманці для голосування:", voters);
-    }
-    try {
-      setTimeout(() => {
-        const mockCID = "bafy...mockedcid";
-        setCID(mockCID);
+  if (!file || !encryptionKey) return alert("Файл і ключ обов'язкові");
+  setLoading(true);
 
-        const newSafe = {
-          cid: mockCID,
-          encryptionKey,
-          unlockType,
-          timestamp: Date.now(),
-          fileName: file.name,
-          inactiveDays,
-          inactiveHours,
-          inactiveMinutes,
-          voters: voters.trim().split("\n"),
-        };
+  try {
+    setTimeout(() => {
+      const newCID = "bafy...mockedcid";
+      const safe = {
+        cid: newCID,
+        unlockType,
+        encryptionKey,
+        fileName: file.name,
+        createdAt: new Date().toISOString(),
+        timeUnlock: unlockType === "time"
+          ? { days: inactiveDays, hours: inactiveHours, minutes: inactiveMinutes }
+          : null,
+        voters: unlockType === "vote" ? voters.split("\n").map(v => v.trim()).filter(Boolean) : null,
+        heirs: [] 
+      };
 
-        const existingSafes = Cookies.get("deathlocker-safes");
-        const safes = existingSafes ? JSON.parse(existingSafes) : [];
-        safes.push(newSafe);
-        Cookies.set("deathlocker-safes", JSON.stringify(safes), { expires: 365 });
+      const existingSafes = Cookies.get("deathlocker-safes");
+      const safes = existingSafes ? JSON.parse(existingSafes) : [];
+      safes.push(safe);
+      Cookies.set("deathlocker-safes", JSON.stringify(safes), { expires: 365 });
 
-        setLoading(false);
-      }, 1500);
-    } catch (err) {
-      alert("Помилка при завантаженні: " + (err as Error).message);
+      setCID(newCID);
       setLoading(false);
-    }
-  };
+    }, 1500);
+  } catch (err) {
+    alert("Помилка при завантаженні: " + (err as Error).message);
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-900 to-blue-900 p-6">
