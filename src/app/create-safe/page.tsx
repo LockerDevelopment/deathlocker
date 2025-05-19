@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Lock, Key, Users, Clock } from "lucide-react";
 import Cookies from "js-cookie";
+import { encryptFile } from "@/lib/utils";
 
 type UnlockType = "time" | "vote";
 
@@ -19,16 +20,36 @@ export default function CreateSafePage() {
   const [voters, setVoters] = useState<string>("");
 
   const handleSubmit = async () => {
-  if (!file || !encryptionKey) return alert("Файл і ключ обов'язкові");
-  setLoading(true);
+    if (!file || !encryptionKey) return alert("Файл і ключ обов'язкові");
+    setLoading(true);
 
-  try {
-    setTimeout(() => {
-      const newCID = "bafy...mockedcid";
+    try {
+      
+      const encryptedBlob = await encryptFile(file, encryptionKey);
+      
+      
+      const formData = new FormData();
+      formData.append("file", encryptedBlob, file.name);
+      formData.append("filename", file.name);
+      formData.append("fileType", file.type);
+
+      
+      const response = await fetch("/api/create-safe", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const { cid: newCID } = await response.json();
+
+      
       const safe = {
         cid: newCID,
         unlockType,
-        encryptionKey,
+        encryptionKey, 
         fileName: file.name,
         createdAt: new Date().toISOString(),
         timeUnlock: unlockType === "time"
@@ -38,20 +59,28 @@ export default function CreateSafePage() {
         heirs: [] 
       };
 
+      
       const existingSafes = Cookies.get("deathlocker-safes");
       const safes = existingSafes ? JSON.parse(existingSafes) : [];
       safes.push(safe);
       Cookies.set("deathlocker-safes", JSON.stringify(safes), { expires: 365 });
 
-      setCID(newCID);
-      setLoading(false);
-    }, 1500);
-  } catch (err) {
-    alert("Помилка при завантаженні: " + (err as Error).message);
-    setLoading(false);
-  }
-};
+      
+      await fetch("/api/safes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(safe),
+      });
 
+      setCID(newCID);
+    } catch (err) {
+      alert("Помилка при завантаженні: " + (err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-900 to-blue-900 p-6">
