@@ -1,4 +1,3 @@
-
 export function cn(...classes: (string | undefined | false)[]) {
     return classes.filter(Boolean).join(" ");
   }
@@ -36,11 +35,17 @@ export function cn(...classes: (string | undefined | false)[]) {
     fileBuffer
   );
 
-  const blob = new Blob([salt, iv, new Uint8Array(encrypted)], { type: 'application/octet-stream' });
+  const blob = new Blob([salt, iv, new Uint8Array(encrypted)], {
+    type: 'application/octet-stream',
+  });
   return blob;
 }
 
-export async function decryptFile(encryptedBlob: Blob, phrase: string, fileType: string): Promise<Blob> {
+export async function decryptFile(
+  encryptedBlob: Blob,
+  phrase: string,
+  fileType: string
+): Promise<Blob> {
   const buffer = await encryptedBlob.arrayBuffer();
   const salt = buffer.slice(0, 16);
   const iv = buffer.slice(16, 28);
@@ -73,6 +78,5 @@ export async function decryptFile(encryptedBlob: Blob, phrase: string, fileType:
     encryptedData
   );
 
-  
   return new Blob([decrypted], { type: fileType });
 }

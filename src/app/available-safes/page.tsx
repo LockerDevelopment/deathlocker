@@ -5,9 +5,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@solana/wallet-adapter-react";
 
-
-
-
 export default function AvailableSafesPage() {
   const [safes, setSafes] = useState<any[]>([]);
   const wallet = useWallet()
@@ -26,7 +23,7 @@ export default function AvailableSafesPage() {
       console.log(filteredSafes) 
       setSafes(filteredSafes);
     }
-  }, []);
+  }, [wallet.publicKey]);
 
   const unlockSafe = (cid: string) => {
     
@@ -34,12 +31,12 @@ export default function AvailableSafesPage() {
   };
 
   return (
-    <div className="p-6 text-white bg-zinc-900 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4 text-blue-300">🔐 Доступні сейфи</h1>
-      {safes.length === 0 && <p>Ви не маєте доступу до жодного сейфа.</p>}
+    <div className="p-6 text-gray-200 bg-black min-h-screen">
+      <h1 className="text-2xl font-bold mb-4 text-primary">🔐 Доступні сейфи</h1>
+      {safes.length === 0 && <p className="text-gray-400">Ви не маєте доступу до жодного сейфа.</p>}
       <ul className="space-y-4">
         {safes.map((safe) => (
-          <li key={safe.cid} className="bg-zinc-800 p-4 rounded-lg border border-zinc-700">
+          <li key={safe.cid} className="bg-gray-900 p-4 rounded-lg border border-primary text-gray-300">
             <p><strong>📁 Файл:</strong> {safe.fileName}</p>
             <p><strong>🔓 Тип:</strong> {safe.unlockType}</p>
             <p><strong>CID:</strong> {safe.cid}</p>
@@ -52,9 +49,16 @@ export default function AvailableSafesPage() {
             {safe.voters && (
               <p>👥 Голосуючі: {safe.voters.join(", ")}</p>
             )}
-            <Button onClick={() => unlockSafe(safe.cid)} className="mt-2 bg-green-600 hover:bg-green-700">
-              Розблокувати
-            </Button>
+            {safe.unlockType === "vote" && safe.votes && (
+              <p>🗳 Голосів: {safe.votes.length}/{safe.requiredVotes}</p>
+            )}
+            {safe.isLocked ? (
+              <Button onClick={() => unlockSafe(safe.cid)} className="mt-2 bg-transparent hover:bg-gray-800 text-accent border border-accent hover:border-secondary">
+                Розблокувати
+              </Button>
+            ) : (
+              <p className="text-green-500 mt-2">Сейф розблоковано.</p>
+            )}
           </li>
         ))}
       </ul>
