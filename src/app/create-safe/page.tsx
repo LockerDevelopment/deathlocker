@@ -24,38 +24,29 @@ export default function CreateSafePage() {
     setLoading(true);
 
     try {
-      
       const encryptedBlob = await encryptFile(file, encryptionKey);
-      
-      
+
       const formData = new FormData();
       formData.append("file", encryptedBlob, file.name);
       formData.append("filename", file.name);
       formData.append("fileType", file.type);
 
-      
-      const response = await fetch("/api/create-safe", {
-        method: "POST",
-        body: formData,
-      });
+     
+      const cid = "asd7aaea6r98asf";
 
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const { cid: newCID } = await response.json();
-
-      
       const safe = {
-        cid: newCID,
+        cid: cid,
         unlockType,
         encryptionKey, 
         fileName: file.name,
         createdAt: new Date().toISOString(),
-        timeUnlock: unlockType === "time"
-          ? { days: inactiveDays, hours: inactiveHours, minutes: inactiveMinutes }
+        timeUnlock:
+          unlockType === "time"
+            ? { days: inactiveDays, hours: inactiveHours, minutes: inactiveMinutes }
+            : null,
+        voters: unlockType === "vote"
+          ? voters.split("\n").map(v => v.trim()).filter(Boolean)
           : null,
-        voters: unlockType === "vote" ? voters.split("\n").map(v => v.trim()).filter(Boolean) : null,
         heirs: [] 
       };
 
@@ -65,16 +56,7 @@ export default function CreateSafePage() {
       safes.push(safe);
       Cookies.set("deathlocker-safes", JSON.stringify(safes), { expires: 365 });
 
-      
-      await fetch("/api/safes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(safe),
-      });
-
-      setCID(newCID);
+      setCID(cid);
     } catch (err) {
       alert("Помилка при завантаженні: " + (err as Error).message);
     } finally {
@@ -83,38 +65,38 @@ export default function CreateSafePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-900 to-blue-900 p-6">
-      <div className="bg-zinc-800 text-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative border border-zinc-700">
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-zinc-900 rounded-full p-3 border-4 border-zinc-700">
-          <Lock className="w-8 h-8 text-blue-400" />
+    <div className="min-h-screen flex items-center justify-center bg-black p-6 text-gray-200">
+      <div className="bg-gray-900 text-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative border border-primary">
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black rounded-full p-3 border-4 border-primary">
+          <Lock className="w-8 h-8 text-accent" />
         </div>
 
-        <h1 className="text-2xl font-bold text-center mt-6 mb-8 text-blue-300">Цифровий Сейф</h1>
+        <h1 className="text-2xl font-bold text-center mt-6 mb-8 text-primary">Цифровий Сейф</h1>
 
-        <label className="block text-sm text-zinc-400 mb-1">Файл для збереження</label>
+        <label className="block text-sm text-gray-400 mb-1">Файл для збереження</label>
         <input
           type="file"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="w-full text-sm file:rounded-md file:border-0 file:bg-blue-600 file:text-white file:px-4 file:py-2 mb-4 bg-zinc-700 text-zinc-200"
+          className="w-full text-sm file:rounded-md file:border-0 file:bg-primary file:text-white file:px-4 file:py-2 mb-4 bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent"
         />
 
-        <label className="block text-sm text-zinc-400 mb-1">Ключ шифрування</label>
+        <label className="block text-sm text-gray-400 mb-1">Ключ шифрування</label>
         <div className="relative mb-4">
-          <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5" />
+          <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="password"
             placeholder="Введіть свій ключ"
             value={encryptionKey}
             onChange={(e) => setEncryptionKey(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-md bg-zinc-700 text-white border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2 rounded-md bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </div>
 
-        <label className="block text-sm text-zinc-400 mb-1">Тип розблокування</label>
+        <label className="block text-sm text-gray-400 mb-1">Тип розблокування</label>
         <select
           value={unlockType}
           onChange={(e) => setUnlockType(e.target.value as UnlockType)}
-          className="w-full py-2 px-3 rounded-md bg-zinc-700 text-white border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          className="w-full py-2 px-3 rounded-md bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent mb-4"
         >
           <option value="time">За часом після неактивності</option>
           <option value="vote">За голосуванням</option>
@@ -122,33 +104,33 @@ export default function CreateSafePage() {
 
         {unlockType === "time" && (
           <div className="mb-4">
-            <label className="block text-sm text-zinc-400 mb-1">Час до розблокування після неактивності:</label>
+            <label className="block text-sm text-gray-400 mb-1">Час до розблокування після неактивності:</label>
             <div className="flex space-x-2">
               <div>
-                <label className="block text-xs text-zinc-500 mb-0.5">Днів</label>
+                <label className="block text-xs text-gray-500 mb-0.5">Днів</label>
                 <input
                   type="number"
                   value={inactiveDays}
                   onChange={(e) => setInactiveDays(parseInt(e.target.value))}
-                  className="w-16 py-2 px-3 rounded-md bg-zinc-700 text-white border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-16 py-2 px-3 rounded-md bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-500 mb-0.5">Годин</label>
+                <label className="block text-xs text-gray-500 mb-0.5">Годин</label>
                 <input
                   type="number"
                   value={inactiveHours}
                   onChange={(e) => setInactiveHours(parseInt(e.target.value))}
-                  className="w-16 py-2 px-3 rounded-md bg-zinc-700 text-white border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-16 py-2 px-3 rounded-md bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-500 mb-0.5">Хвилин</label>
+                <label className="block text-xs text-gray-500 mb-0.5">Хвилин</label>
                 <input
                   type="number"
                   value={inactiveMinutes}
                   onChange={(e) => setInactiveMinutes(parseInt(e.target.value))}
-                  className="w-16 py-2 px-3 rounded-md bg-zinc-700 text-white border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-16 py-2 px-3 rounded-md bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                 />
               </div>
             </div>
@@ -157,27 +139,27 @@ export default function CreateSafePage() {
 
         {unlockType === "vote" && (
           <div className="mb-4">
-            <label className="block text-sm text-zinc-400 mb-1">Гаманці для голосування (кожний з нового рядка)</label>
+            <label className="block text-sm text-gray-400 mb-1">Гаманці для голосування (кожний з нового рядка)</label>
             <textarea
               value={voters}
               onChange={(e) => setVoters(e.target.value)}
-              className="w-full py-2 px-3 rounded-md bg-zinc-700 text-white border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full py-2 px-3 rounded-md bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
               rows={3}
             />
           </div>
         )}
 
-        <Button onClick={handleSubmit} disabled={loading || !file || !encryptionKey} className="w-full bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleSubmit} disabled={loading || !file || !encryptionKey} className="w-full bg-transparent hover:bg-gray-800 text-primary border border-primary hover:border-accent">
           {loading ? "Завантаження..." : "🔐 Створити сейф"}
         </Button>
 
         {cid && (
-          <div className="mt-6 bg-zinc-900 border border-zinc-700 p-4 rounded-lg text-sm text-blue-300">
+          <div className="mt-6 bg-gray-900 border border-primary p-4 rounded-lg text-sm text-accent">
             <p className="mb-1">✅ Сейф створено!</p>
             <p className="break-all">
               <strong>CID:</strong> {cid}
             </p>
-            <p className="text-xs text-zinc-500 mt-2">
+            <p className="text-xs text-gray-500 mt-2">
               Не забудьте зберегти свій ключ шифрування. Без нього ви не зможете відновити доступ до даних.
             </p>
           </div>

@@ -21,12 +21,12 @@ export default function MySafesPage() {
   };
 
   return (
-    <div className="p-6 text-white bg-zinc-900 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4 text-blue-300">🔐 Мої сейфи</h1>
-      {safes.length === 0 && <p>У вас немає збережених сейфів.</p>}
+    <div className="p-6 text-gray-200 bg-black min-h-screen">
+      <h1 className="text-2xl font-bold mb-4 text-primary">🔐 Мої сейфи</h1>
+      {safes.length === 0 && <p className="text-gray-400">У вас немає збережених сейфів.</p>}
       <ul className="space-y-4">
         {safes.map((safe) => (
-          <li key={safe.cid} className="bg-zinc-800 p-4 rounded-lg border border-zinc-700">
+          <li key={safe.cid} className="bg-gray-900 p-4 rounded-lg border border-primary text-gray-300">
             <p><strong>📁 Файл:</strong> {safe.fileName}</p>
             <p><strong>🔓 Тип:</strong> {safe.unlockType}</p>
             <p><strong>CID:</strong> {safe.cid}</p>
@@ -39,7 +39,10 @@ export default function MySafesPage() {
             {safe.voters && (
               <p>👥 Голосуючі: {safe.voters.join(", ")}</p>
             )}
-            <Button onClick={() => deleteSafe(safe.cid)} className="mt-2 bg-red-600 hover:bg-red-700">Видалити</Button>
+            {safe.unlockType === "vote" && safe.votes && (
+              <p>🗳 Голосів: {safe.votes.length}/{safe.requiredVotes}</p>
+            )}
+            <Button onClick={() => deleteSafe(safe.cid)} className="mt-2 bg-transparent hover:bg-red-800 text-red-500 border border-red-500 hover:border-red-700">Видалити</Button>
           </li>
         ))}
       </ul>
