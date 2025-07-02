@@ -15,7 +15,7 @@ describe("deathlocker", () => {
   const ipfsCid = "QmTest123";
   const voters = [voter.publicKey];
   const requiredVotes = 1;
-  const unlockDelay = 60 * 60 * 24; // 1 day in seconds
+  const unlockDelay = 60 * 60 * 24; 
 
   let vaultPda: PublicKey;
   let vaultBump: number;

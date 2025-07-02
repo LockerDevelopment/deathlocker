@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Lock, Key, Users, Clock } from "lucide-react";
-import Cookies from "js-cookie";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { encryptFile } from "@/lib/utils";
+import { uploadToIPFS } from "@/lib/ipfs";
+import { Program, AnchorProvider, web3 } from "@project-serum/anchor";
+import { IDL } from "../../program/target/types/deathlocker";
 
 type UnlockType = "time" | "vote";
 
@@ -18,47 +21,61 @@ export default function CreateSafePage() {
   const [inactiveHours, setInactiveHours] = useState(0);
   const [inactiveMinutes, setInactiveMinutes] = useState(0);
   const [voters, setVoters] = useState<string>("");
+  const [requiredVotes, setRequiredVotes] = useState(1);
+
+  const wallet = useWallet();
+  const { connection } = useConnection();
 
   const handleSubmit = async () => {
-    if (!file || !encryptionKey) return alert("Файл і ключ обов'язкові");
+    if (!file || !encryptionKey || !wallet.publicKey) return alert("Файл, ключ та гаманець обов'язкові");
     setLoading(true);
 
     try {
+    
       const encryptedBlob = await encryptFile(file, encryptionKey);
-
-      const formData = new FormData();
-      formData.append("file", encryptedBlob, file.name);
-      formData.append("filename", file.name);
-      formData.append("fileType", file.type);
+      const encryptedFile = new File([encryptedBlob], file.name, { type: 'application/octet-stream' });
 
      
-      const cid = "asd7aaea6r98asf";
-
-      const safe = {
-        cid: cid,
-        unlockType,
-        encryptionKey, 
-        fileName: file.name,
-        createdAt: new Date().toISOString(),
-        timeUnlock:
-          unlockType === "time"
-            ? { days: inactiveDays, hours: inactiveHours, minutes: inactiveMinutes }
-            : null,
-        voters: unlockType === "vote"
-          ? voters.split("\n").map(v => v.trim()).filter(Boolean)
-          : null,
-        heirs: [] 
-      };
+      const ipfsCid = await uploadToIPFS(encryptedFile);
 
       
-      const existingSafes = Cookies.get("deathlocker-safes");
-      const safes = existingSafes ? JSON.parse(existingSafes) : [];
-      safes.push(safe);
-      Cookies.set("deathlocker-safes", JSON.stringify(safes), { expires: 365 });
+      const provider = new AnchorProvider(connection, wallet, {});
+      const program = new Program(IDL, process.env.NEXT_PUBLIC_PROGRAM_ID!, provider);
 
-      setCID(cid);
+      
+      const unlockDelay = (inactiveDays * 24 * 60 * 60) + (inactiveHours * 60 * 60) + (inactiveMinutes * 60);
+
+      
+      const voterPubkeys = voters.split("\n")
+        .map(v => v.trim())
+        .filter(Boolean)
+        .map(v => new web3.PublicKey(v));
+
+      
+      const [vaultPda] = await web3.PublicKey.findProgramAddress(
+        [Buffer.from("vault"), wallet.publicKey.toBuffer()],
+        program.programId
+      );
+
+      await program.methods
+        .createVault(
+          ipfsCid,
+          unlockType === "time" ? { timeBased: {} } : { voteBased: {} },
+          voterPubkeys,
+          requiredVotes,
+          new web3.BN(unlockDelay)
+        )
+        .accounts({
+          vault: vaultPda,
+          owner: wallet.publicKey,
+          systemProgram: web3.SystemProgram.programId,
+        })
+        .rpc();
+
+      setCID(ipfsCid);
     } catch (err) {
-      alert("Помилка при завантаженні: " + (err as Error).message);
+      console.error(err);
+      alert("Помилка при створенні сейфа: " + (err as Error).message);
     } finally {
       setLoading(false);
     }
